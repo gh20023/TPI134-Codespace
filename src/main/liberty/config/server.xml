@@ -43,8 +43,8 @@
     <!-- Automatically expand WAR files and EAR files -->
     <applicationManager autoExpand="true"/>
     <webApplication id="PupaSv" 
-                  location="app.war" 
-                  contextRoot="/" 
-                  name="PupaSv"/>
+              location="/opt/ol/wlp/usr/servers/defaultServer/apps/app.war" 
+              contextRoot="/" 
+              name="PupaSv"/>
 
 </server>

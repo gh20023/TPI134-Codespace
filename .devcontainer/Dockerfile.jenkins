@@ -37,22 +37,18 @@ RUN mkdir -p /usr/share/maven && \
 RUN curl -L "https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && \
     chmod +x /usr/local/bin/docker-compose
 
-# 6. Configurar grupos y permisos
+# 6. Configurar grupos Docker (preparar para diferentes GIDs)
 ARG DOCKER_GID=999
-RUN if [ -z "$DOCKER_GID" ]; then \
-      groupadd docker; \
-    else \
-      groupadd -g ${DOCKER_GID} docker; \
-    fi && \
-    usermod -aG docker jenkins
+RUN groupadd -g ${DOCKER_GID} docker-build || true && \
+    usermod -aG ${DOCKER_GID} jenkins || true
 
-# 7. Configurar sudo sin contraseña
+# 7. Configurar sudo sin contraseña para jenkins
 RUN echo "jenkins ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 # 8. Configurar entrypoint
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh && \
-    chown jenkins:jenkins /entrypoint.sh
+    chown root:root /entrypoint.sh
 
 # 9. Verificar instalaciones
 RUN docker --version && \
