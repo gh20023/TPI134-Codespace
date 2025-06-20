@@ -13,6 +13,10 @@ services:
       - jenkins_home:/var/jenkins_home
       - ./target:/workspace/target
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./docker-compose.yml:/workspace/docker-compose.yml  # Importante para acceso
+    environment:
+      # Variables para acceso Docker
+      DOCKER_HOST: unix:///var/run/docker.sock
     restart: unless-stopped
 
   liberty:
@@ -22,10 +26,14 @@ services:
       - "9080:9080"
       - "9443:9443"
     volumes:
-      # Montar configuración del servidor
       - ./src/main/liberty/config:/opt/ol/wlp/usr/servers/defaultServer
-      # Montar WAR específico en lugar de todo el directorio target
-      - ./target/PupaSv-1.0-SNAPSHOT.war:/opt/ol/wlp/usr/servers/defaultServer/apps/PupaSv.war
+      - ./target:/opt/ol/wlp/usr/servers/defaultServer/apps
+    environment:
+      DB_HOST: ${DB_HOST:-localhost}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-pupadb}
+      DB_USER: ${DB_USER:-user}
+      DB_PASSWORD: ${DB_PASSWORD:-pass}
     command: ["/opt/ol/wlp/bin/server", "run", "defaultServer"]
     restart: unless-stopped
 
