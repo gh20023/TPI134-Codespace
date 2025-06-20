@@ -5,6 +5,8 @@ services:
     build:
       context: .devcontainer
       dockerfile: Dockerfile.jenkins
+      args:
+        DOCKER_GID: ${DOCKER_GID} 
     container_name: jenkins
     ports:
       - "8080:8080"
@@ -13,10 +15,13 @@ services:
       - jenkins_home:/var/jenkins_home
       - ./target:/workspace/target
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./docker-compose.yml:/workspace/docker-compose.yml  # Importante para acceso
+      - ./docker-compose.yml:/workspace/docker-compose.yml
+      - ./.devcontainer/entrypoint.sh:/entrypoint.sh:ro  # Agrega :ro para read-only
     environment:
-      # Variables para acceso Docker
+      DOCKER_GID: ${DOCKER_GID} 
       DOCKER_HOST: unix:///var/run/docker.sock
+      DOCKER_TLS_CERTDIR: ""
+      DOCKER_CERT_PATH: ""
     restart: unless-stopped
 
   liberty:
