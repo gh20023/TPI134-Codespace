@@ -13,17 +13,16 @@ services:
       - "50000:50000"
     volumes:
       - jenkins_home:/var/jenkins_home
-      # CORECCIÓN: Mapear el workspace de Jenkins al volumen compartido
       - shared_apps:/var/jenkins_home/workspace
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./docker-compose.yml:/workspace/docker-compose.yml
-      - ./.devcontainer/entrypoint.sh:/entrypoint.sh:ro
     environment:
       DOCKER_GID: ${DOCKER_GID}
-      DOCKER_HOST: unix:///var/run/docker.sock
-      DOCKER_TLS_CERTDIR: ""
-      DOCKER_CERT_PATH: ""
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   liberty:
     image: openliberty/open-liberty:25.0.0.5-full-java21-openj9-ubi-minimal
@@ -33,20 +32,34 @@ services:
       - "9443:9443"
     volumes:
       - ./src/main/liberty/config:/opt/ol/wlp/usr/servers/defaultServer
-      # CORECCIÓN: Mapear desde el workspace de Jenkins
-      - shared_apps:/var/jenkins_home/workspace:ro  # Solo lectura
-      # Crear un directorio específico para apps
+      - shared_apps:/var/jenkins_home/workspace:ro
       - liberty_apps:/opt/ol/wlp/usr/servers/defaultServer/apps
+      - ./shared-resources:/opt/ol/wlp/usr/shared/resources:ro
     environment:
-      DB_HOST: ${DB_HOST:-localhost}
-      DB_PORT: ${DB_PORT:-5432}
-      DB_NAME: ${DB_NAME:-pupadb}
-      DB_USER: ${DB_USER:-user}
-      DB_PASSWORD: ${DB_PASSWORD:-pass}
+      SHARED_LIB_DIR: /opt/ol/wlp/usr/shared/resources
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: tipicos_tpi135
+      DB_USER: user
+      DB_PASSWORD: pass
     command: ["/opt/ol/wlp/bin/server", "run", "defaultServer"]
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    environment:
+      POSTGRES_DB: tipicos_tpi135
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
 volumes:
   jenkins_home:
   shared_apps:
   liberty_apps:
+  postgres_data:
